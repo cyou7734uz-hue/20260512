@@ -59,12 +59,8 @@ function setup() {
 function draw() {
   background(0);
 
-  // 顯示鏡頭畫面
-  push();
-  translate(width, 0);
-  scale(-1, 1);
+  // 顯示鏡頭畫面 (直接顯示即可，因為 createCapture 已設定 flipped: true)
   image(video, 0, 0, width, height);
-  pop();
 
   // 加一層暗色，讓臉譜更明顯
   fill(0, 80);
@@ -89,33 +85,38 @@ function gotFaces(results) {
 function drawFruitMask(face) {
   let keypoints = face.keypoints;
 
-  // 取臉部左右與上下位置
-  let leftFace = keypoints[234];
-  let rightFace = keypoints[454];
-  let topFace = keypoints[10];
-  let chin = keypoints[152];
+  // 取得關鍵點：10(額頭頂), 152(下巴底), 234(右臉邊緣), 454(左臉邊緣)
+  let topFace = keypoints[10];    // 額頭
+  let chin = keypoints[152];      // 下巴
+  let leftFace = keypoints[234];  // 臉頰左側
+  let rightFace = keypoints[454]; // 臉頰右側
 
   if (!leftFace || !rightFace || !topFace || !chin) return;
 
+  // 1. 計算臉部的中心點
   let faceCenterX = (leftFace.x + rightFace.x) / 2;
   let faceCenterY = (topFace.y + chin.y) / 2;
 
-  let faceW = dist(leftFace.x, leftFace.y, rightFace.x, rightFace.y) * 1.45;
-  let faceH = dist(topFace.x, topFace.y, chin.x, chin.y) * 1.45;
+  // 2. 計算精確的寬度與高度 (加上 1.5 倍縮放以覆蓋全臉)
+  let faceW = dist(leftFace.x, leftFace.y, rightFace.x, rightFace.y) * 1.5;
+  let faceH = dist(topFace.x, topFace.y, chin.x, chin.y) * 1.5;
 
-  // 根據左右臉頰算旋轉角度
+  // 3. 根據左右臉關鍵點計算旋轉角度
   let angle = atan2(rightFace.y - leftFace.y, rightFace.x - leftFace.x);
 
   let maskImg;
+  let yOffset = 0; // 用於微調垂直位置
 
   if (currentMask === "strawberry") {
     maskImg = strawberryMask;
-    faceW *= 1.05;
+    yOffset = -faceH * 0.05; // 草莓稍微往上移，讓葉子位置更好看
+    faceW *= 1.1;
     faceH *= 1.1;
   } else if (currentMask === "banana") {
     maskImg = bananaMask;
-    faceW *= 0.95;
-    faceH *= 1.25;
+    yOffset = -faceH * 0.1;  // 香蕉圖片較長，稍微上移對準五官
+    faceW *= 1.1;
+    faceH *= 1.3;
   }
 
   push();
@@ -126,7 +127,8 @@ function drawFruitMask(face) {
   // 讓臉譜稍微上下浮動，有短劇變臉感
   let bounce = sin(frameCount * 0.05) * 4;
 
-  image(maskImg, 0, bounce, faceW, faceH);
+  // 繪製臉譜，加入 yOffset 與 bounce 效果
+  image(maskImg, 0, yOffset + bounce, faceW, faceH);
   pop();
 }
 
@@ -329,15 +331,19 @@ function drawWaitingText() {
 function drawTitle() {
   push();
   fill(255);
-  textAlign(CENTER, TOP);
+  textAlign(CENTER, TOP); // 確保文字置中對齊頂部
+
+  // 新增：顯示學號和姓名
+  textSize(18); // 可以調整字體大小
+  text("414730530陳宥縈", width / 2, 10); // 顯示在最上方，距離頂部 10 像素
+
   textSize(24);
   textStyle(BOLD);
-  text("AI水果短劇變臉特效", width / 2, 24);
-
+  text("AI水果短劇變臉特效", width / 2, 40); // 調整主標題的 Y 座標，使其在學號姓名下方
   textSize(14);
   textStyle(NORMAL);
   fill(255, 200);
-  text("點下方按鈕切換水果臉譜", width / 2, 58);
+  text("點下方按鈕切換水果臉譜", width / 2, 74); // 調整副標題的 Y 座標
   pop();
 }
 

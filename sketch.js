@@ -1,77 +1,169 @@
-let capture;
+let video;
 let faceMesh;
 let faces = [];
-let options = { maxFaces: 1, refineLandmarks: false, flipHorizontal: false };
 
-function gotFaces(results) {
-  // 儲存辨識結果
-  faces = results;
+let strawberryMask;
+let bananaMask;
+let currentMask = "strawberry";
+
+let btnStrawberry;
+let btnBanana;
+
+function preload() {
+  // 載入水果臉譜圖片
+  strawberryMask = loadImage("assets/strawberry.png");
+  bananaMask = loadImage("assets/banana.png");
+
+  // 載入 FaceMesh 模型
+  faceMesh = ml5.faceMesh({
+    maxFaces: 1,
+    flipped: true
+  });
 }
 
 function setup() {
-  // 建立一個全螢幕的畫布
   createCanvas(windowWidth, windowHeight);
-  
-  // 擷取攝影機影像
-  capture = createCapture(VIDEO, { flipped: false });
-  capture.size(640, 480);
-  // 隱藏預設產生的 HTML 影片元件，只在畫布上繪製
-  capture.hide();
 
-  // 初始化 FaceMesh 模型
-  faceMesh = ml5.faceMesh(options);
-  // 開始持續辨識
-  faceMesh.detectStart(capture, gotFaces);
+  video = createCapture(VIDEO, { flipped: true });
+  video.size(width, height);
+  video.hide();
+
+  faceMesh.detectStart(video, gotFaces);
+
+  createButtons();
 }
 
 function draw() {
-  // 設定背景顏色為 e7c6ff
-  background('#e7c6ff');
+  background(0);
 
-  // 計算影像的顯示寬高（整個畫布的 50%）
-  let videoW = width * 0.5;
-  let videoH = height * 0.5;
-
-  // 計算置中座標
-  let x = (width - videoW) / 2;
-  let y = (height - videoH) / 2;
-
-  // 處理左右顛倒（鏡像）並繪製影像
+  // 顯示鏡頭畫面
   push();
-  // 將座標原點移至影像顯示區域的右側邊界，以便進行翻轉
-  translate(x + videoW, y);
-  // 水平縮放 -1 達成鏡像效果
+  translate(width, 0);
   scale(-1, 1);
-  // 繪製影像 (此時座標已平移，所以從 0, 0 開始繪製即可)
-  image(capture, 0, 0, videoW, videoH);
+  image(video, 0, 0, width, height);
+  pop();
 
-  // 繪製耳環效果
+  // 加一層暗色，讓臉譜更明顯
+  fill(0, 80);
+  noStroke();
+  rect(0, 0, width, height);
+
   if (faces.length > 0) {
-    let face = faces[0];
-    
-    // MediaPipe FaceMesh 索引值：132 (右耳垂附近), 361 (左耳垂附近)
-    let earlobePoints = [face.keypoints[132], face.keypoints[361]];
-    
-    // 計算縮放比例
-    let sX = videoW / capture.width;
-    let sY = videoH / capture.height;
-
-    fill(255, 255, 0); // 黃色
-    noStroke();
-
-    earlobePoints.forEach(p => {
-      if (p) {
-        // 在耳垂位置往下畫三個圓圈
-        for (let i = 0; i < 3; i++) {
-          circle(p.x * sX, (p.y * sY) + (i * 15), 10);
-        }
-      }
-    });
+    drawFruitMask(faces[0]);
+  } else {
+    drawWaitingText();
   }
+
+  drawTitle();
+}
+
+function gotFaces(results) {
+  faces = results;
+}
+
+function drawFruitMask(face) {
+  let keypoints = face.keypoints;
+
+  // 取臉部左右與上下位置
+  let leftFace = keypoints[234];
+  let rightFace = keypoints[454];
+  let topFace = keypoints[10];
+  let chin = keypoints[152];
+
+  if (!leftFace || !rightFace || !topFace || !chin) return;
+
+  let faceCenterX = (leftFace.x + rightFace.x) / 2;
+  let faceCenterY = (topFace.y + chin.y) / 2;
+
+  let faceW = dist(leftFace.x, leftFace.y, rightFace.x, rightFace.y) * 1.45;
+  let faceH = dist(topFace.x, topFace.y, chin.x, chin.y) * 1.45;
+
+  // 根據左右臉頰算旋轉角度
+  let angle = atan2(rightFace.y - leftFace.y, rightFace.x - leftFace.x);
+
+  let maskImg;
+
+  if (currentMask === "strawberry") {
+    maskImg = strawberryMask;
+    faceW *= 1.05;
+    faceH *= 1.1;
+  } else if (currentMask === "banana") {
+    maskImg = bananaMask;
+    faceW *= 0.95;
+    faceH *= 1.25;
+  }
+
+  push();
+  imageMode(CENTER);
+  translate(faceCenterX, faceCenterY);
+  rotate(angle);
+
+  // 讓臉譜稍微上下浮動，有短劇變臉感
+  let bounce = sin(frameCount * 0.05) * 4;
+
+  image(maskImg, 0, bounce, faceW, faceH);
   pop();
 }
 
-// 當視窗大小改變時，重新調整畫布大小以維持全螢幕
+function createButtons() {
+  btnStrawberry = createButton("🍓 草莓臉");
+  btnStrawberry.position(20, height - 80);
+  btnStrawberry.mousePressed(() => {
+    currentMask = "strawberry";
+  });
+
+  btnBanana = createButton("🍌 香蕉臉");
+  btnBanana.position(130, height - 80);
+  btnBanana.mousePressed(() => {
+    currentMask = "banana";
+  });
+
+  styleButton(btnStrawberry);
+  styleButton(btnBanana);
+}
+
+function styleButton(btn) {
+  btn.style("font-size", "18px");
+  btn.style("padding", "10px 16px");
+  btn.style("border-radius", "999px");
+  btn.style("border", "none");
+  btn.style("background", "rgba(255,255,255,0.85)");
+  btn.style("color", "#111");
+  btn.style("font-weight", "bold");
+  btn.style("cursor", "pointer");
+}
+
+function drawWaitingText() {
+  push();
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(22);
+  text("請把臉移到鏡頭中間", width / 2, height / 2);
+  pop();
+}
+
+function drawTitle() {
+  push();
+  fill(255);
+  textAlign(CENTER, TOP);
+  textSize(24);
+  textStyle(BOLD);
+  text("AI水果短劇變臉特效", width / 2, 24);
+
+  textSize(14);
+  textStyle(NORMAL);
+  fill(255, 200);
+  text("點下方按鈕切換水果臉譜", width / 2, 58);
+  pop();
+}
+
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+
+  if (video) {
+    video.size(width, height);
+  }
+
+  btnStrawberry.position(20, height - 80);
+  btnBanana.position(130, height - 80);
 }

@@ -142,9 +142,9 @@ function drawEarrings(face) {
 
   let keypoints = face.keypoints;
 
-  // 使用使用者要求的側臉關鍵點
-  let leftPoint = keypoints[234];  // 臉部左側 (畫面上左側)
-  let rightPoint = keypoints[454]; // 臉部右側 (畫面上右側)
+  // 使用更精確的耳垂/臉頰邊緣關鍵點：177 (左) 與 401 (右)
+  let leftPoint = keypoints[177];  // 使用者左臉邊緣（靠近耳垂）
+  let rightPoint = keypoints[401]; // 使用者右臉邊緣（靠近耳垂）
 
   if (!leftPoint || !rightPoint) return;
 
@@ -153,7 +153,7 @@ function drawEarrings(face) {
 
   // 2. 計算臉部寬度作為縮放基準
   let faceW = dist(leftPoint.x, leftPoint.y, rightPoint.x, rightPoint.y);
-  let earringSize = faceW * 0.12; 
+  let earringSize = faceW * 0.15; // 稍微放大耳環，讓效果更明顯
 
   // 3. 偵測快速動態：比對上一影格的座標與角度
   let moveDist = dist(leftPoint.x, leftPoint.y, lastLeftPoint.x, lastLeftPoint.y);
@@ -192,24 +192,24 @@ function drawSingleEarring(x, y, size, img, swing) {
   translate(x, y);
   
   // 稍微向外偏移一點，避免耳環直接重疊在臉頰上，更有「懸掛」在耳朵邊緣的感覺
-  let xOffset = (x < width/2) ? -size*0.2 : size*0.2;
-  translate(xOffset, size * 0.3);
+  let xOffset = (x < width / 2) ? -size * 0.1 : size * 0.1;
+  translate(xOffset, size * 0.1);
   
   // 應用計算後的總擺動角度
   rotate(swing);
 
   // 畫耳環吊線 (金色質感)
   stroke(255, 215, 0); // Gold color
-  strokeWeight(size * 0.08);
-  line(0, 0, 0, size * 0.5);
+  strokeWeight(size * 0.06);
+  line(0, 0, 0, size * 0.4);
 
   // 畫掛勾小圓點
   fill(255, 215, 0);
   noStroke();
-  circle(0, 0, size * 0.15);
+  circle(0, 0, size * 0.1);
 
   imageMode(CENTER);
-  image(img, 0, size * 0.8, size, size);
+  image(img, 0, size * 0.7, size, size);
   pop();
 }
 
@@ -281,13 +281,13 @@ function updateAndDrawSparkles() {
 
 function createButtons() {
   btnStrawberry = createButton("🍓 草莓臉");
-  btnStrawberry.position(20, height - 80);
+  btnStrawberry.position(40, height - 110);
   btnStrawberry.mousePressed(() => {
     currentMask = "strawberry";
   });
 
   btnBanana = createButton("🍌 香蕉臉");
-  btnBanana.position(130, height - 80);
+  btnBanana.position(360, height - 110);
   btnBanana.mousePressed(() => {
     currentMask = "banana";
   });
@@ -296,7 +296,7 @@ function createButtons() {
   for (let i = 0; i < earringTypes.length; i++) {
     let type = earringTypes[i];
     let btn = createButton(`💎 ${type.toUpperCase()}`);
-    btn.position(20 + (i * 90), height - 130); // 放在臉譜按鈕上方
+    btn.position(40 + (i * 300), height - 220); 
     btn.mousePressed(() => {
       currentEarring = type;
     });
@@ -309,8 +309,8 @@ function createButtons() {
 }
 
 function styleButton(btn) {
-  btn.style("font-size", "18px");
-  btn.style("padding", "10px 16px");
+  btn.style("font-size", "30px"); // 再次放大字體以減少緊湊感
+  btn.style("padding", "16px 36px"); // 增加內距讓按鈕更大
   btn.style("border-radius", "999px");
   btn.style("border", "none");
   btn.style("background", "rgba(255,255,255,0.85)");
@@ -355,13 +355,13 @@ function windowResized() {
   }
 
   // 強化版修正：確保按鈕物件與 position 方法都存在才執行
-  if (btnStrawberry && typeof btnStrawberry.position === 'function') btnStrawberry.position(20, height - 80);
-  if (btnBanana && typeof btnBanana.position === 'function') btnBanana.position(130, height - 80);
+  if (btnStrawberry && typeof btnStrawberry.position === 'function') btnStrawberry.position(40, height - 110);
+  if (btnBanana && typeof btnBanana.position === 'function') btnBanana.position(360, height - 110);
 
   // 重新調整耳環按鈕位置
   earringButtons.forEach((btn, i) => {
     if (btn && typeof btn.position === 'function') {
-      btn.position(20 + (i * 90), height - 130);
+      btn.position(40 + (i * 300), height - 220);
     }
   });
 }

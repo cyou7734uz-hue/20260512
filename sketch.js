@@ -6,6 +6,12 @@ let strawberryMask;
 let bananaMask;
 let currentMask = "strawberry";
 
+// 新增：耳環圖片管理
+let earringImages = {};
+let earringTypes = ["earring1", "earring2", "earring3"]; // 請確保資料夾內有這些檔案
+let currentEarring = "earring1";
+let earringButtons = [];
+
 // 新增：亮晶晶粒子相關變數
 let sparkles = []; // 儲存所有活躍的粒子
 let lastLeftPoint = { x: 0, y: 0 }; // 追蹤上一影格的左臉關鍵點
@@ -19,6 +25,11 @@ function preload() {
   // 載入水果臉譜圖片
   strawberryMask = loadImage("assets/strawberry.png");
   bananaMask = loadImage("assets/banana.png");
+
+  // 載入耳環資料夾內的各個圖片
+  for (let type of earringTypes) {
+    earringImages[type] = loadImage(`assets/earrings/${type}.png`);
+  }
 
   // 載入 FaceMesh 模型
   faceMesh = ml5.faceMesh({
@@ -154,8 +165,8 @@ function drawEarrings(face) {
   let naturalOscillation = sin(frameCount * 0.1) * 0.15; // 基礎的輕微晃動
   let totalSwing = gravityInertia + naturalOscillation;
 
-  // 決定耳環圖片
-  let img = currentMask === "strawberry" ? strawberryMask : bananaMask;
+  // 使用目前選擇的耳環圖片
+  let img = earringImages[currentEarring];
 
   // 繪製左右耳環
   drawSingleEarring(leftPoint.x, leftPoint.y, earringSize, img, totalSwing);
@@ -270,6 +281,18 @@ function createButtons() {
     currentMask = "banana";
   });
 
+  // 動態產生耳環切換按鈕
+  for (let i = 0; i < earringTypes.length; i++) {
+    let type = earringTypes[i];
+    let btn = createButton(`💎 ${type}`);
+    btn.position(20 + (i * 90), height - 130); // 放在臉譜按鈕上方
+    btn.mousePressed(() => {
+      currentEarring = type;
+    });
+    styleButton(btn);
+    earringButtons.push(btn);
+  }
+
   styleButton(btnStrawberry);
   styleButton(btnBanana);
 }
@@ -318,4 +341,9 @@ function windowResized() {
 
   btnStrawberry.position(20, height - 80);
   btnBanana.position(130, height - 80);
+
+  // 重新調整耳環按鈕位置
+  for (let i = 0; i < earringButtons.length; i++) {
+    earringButtons[i].position(20 + (i * 90), height - 130);
+  }
 }

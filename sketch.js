@@ -28,7 +28,13 @@ function preload() {
 
   // 載入耳環資料夾內的各個圖片
   for (let type of earringTypes) {
-    earringImages[type] = loadImage(`assets/earrings/${type}.png`);
+    // 增加錯誤回呼函數，避免單一圖片缺失導致整個程式掛掉
+    earringImages[type] = loadImage(`assets/earrings/${type}.png`, 
+      img => console.log(`${type} 載入成功`),
+      err => {
+        console.error(`無法載入耳環圖片: assets/earrings/${type}.png。請檢查資料夾名稱是否為 earrings (複數) 且包含該檔案。`);
+      }
+    );
   }
 
   // 載入 FaceMesh 模型
@@ -129,6 +135,9 @@ function drawFruitMask(face) {
  * @param {object} face - FaceMesh 偵測到的臉部物件
  */
 function drawEarrings(face) {
+  // 安全檢查：如果目前選擇的耳環圖片尚未載入成功，則不執行繪製
+  if (!earringImages[currentEarring] || earringImages[currentEarring].width <= 1 || !earringImages[currentEarring].canvas) return;
+
   let keypoints = face.keypoints;
 
   // 使用使用者要求的側臉關鍵點
@@ -284,7 +293,7 @@ function createButtons() {
   // 動態產生耳環切換按鈕
   for (let i = 0; i < earringTypes.length; i++) {
     let type = earringTypes[i];
-    let btn = createButton(`💎 ${type}`);
+    let btn = createButton(`💎 ${type.toUpperCase()}`);
     btn.position(20 + (i * 90), height - 130); // 放在臉譜按鈕上方
     btn.mousePressed(() => {
       currentEarring = type;
@@ -339,11 +348,14 @@ function windowResized() {
     video.size(width, height);
   }
 
-  btnStrawberry.position(20, height - 80);
-  btnBanana.position(130, height - 80);
+  // 強化版修正：確保按鈕物件與 position 方法都存在才執行
+  if (btnStrawberry && typeof btnStrawberry.position === 'function') btnStrawberry.position(20, height - 80);
+  if (btnBanana && typeof btnBanana.position === 'function') btnBanana.position(130, height - 80);
 
   // 重新調整耳環按鈕位置
-  for (let i = 0; i < earringButtons.length; i++) {
-    earringButtons[i].position(20 + (i * 90), height - 130);
-  }
+  earringButtons.forEach((btn, i) => {
+    if (btn && typeof btn.position === 'function') {
+      btn.position(20 + (i * 90), height - 130);
+    }
+  });
 }

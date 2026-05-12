@@ -5,6 +5,7 @@ let faces = [];
 let strawberryMask;
 let bananaMask;
 let currentMask = "strawberry";
+let showMask = true; // 新增：控制面具顯示的變數
 
 // 新增：耳環圖片管理
 let earringImages = {};
@@ -20,6 +21,7 @@ let lastFaceAngle = 0; // 追蹤上一影格的臉部角度
 
 let btnStrawberry;
 let btnBanana;
+let btnToggleMask; // 新增：控制面具顯示的按鈕
 
 function preload() {
   // 載入水果臉譜圖片
@@ -68,7 +70,7 @@ function draw() {
   rect(0, 0, width, height);
 
   if (faces.length > 0) {
-    drawFruitMask(faces[0]);
+    if (showMask) drawFruitMask(faces[0]); // 根據開關狀態決定是否繪製面具
     drawEarrings(faces[0]);
   } else {
     drawWaitingText();
@@ -153,7 +155,7 @@ function drawEarrings(face) {
 
   // 2. 計算臉部寬度作為縮放基準
   let faceW = dist(leftPoint.x, leftPoint.y, rightPoint.x, rightPoint.y);
-  let earringSize = faceW * 0.15; // 稍微放大耳環，讓效果更明顯
+  let earringSize = faceW * 0.3; // 再次放大耳環，讓效果更華麗
 
   // 3. 偵測快速動態：比對上一影格的座標與角度
   let moveDist = dist(leftPoint.x, leftPoint.y, lastLeftPoint.x, lastLeftPoint.y);
@@ -292,6 +294,14 @@ function createButtons() {
     currentMask = "banana";
   });
 
+  // 新增面具顯示開關
+  btnToggleMask = createButton("👁️ 顯示/隱藏面具");
+  btnToggleMask.position(680, height - 110); // 放置在香蕉按鈕旁邊
+  btnToggleMask.mousePressed(() => {
+    showMask = !showMask;
+  });
+  styleButton(btnToggleMask);
+
   // 動態產生耳環切換按鈕
   for (let i = 0; i < earringTypes.length; i++) {
     let type = earringTypes[i];
@@ -357,6 +367,7 @@ function windowResized() {
   // 強化版修正：確保按鈕物件與 position 方法都存在才執行
   if (btnStrawberry && typeof btnStrawberry.position === 'function') btnStrawberry.position(40, height - 110);
   if (btnBanana && typeof btnBanana.position === 'function') btnBanana.position(360, height - 110);
+  if (btnToggleMask && typeof btnToggleMask.position === 'function') btnToggleMask.position(680, height - 110);
 
   // 重新調整耳環按鈕位置
   earringButtons.forEach((btn, i) => {

@@ -344,16 +344,16 @@ function drawTitle() {
   textAlign(CENTER, TOP); // 確保文字置中對齊頂部
 
   // 新增：顯示學號和姓名
-  textSize(18); // 可以調整字體大小
+  textSize(32); // 放大字體
   text("414730530陳宥縈", width / 2, 10); // 顯示在最上方，距離頂部 10 像素
 
-  textSize(24);
+  textSize(48); // 放大字體
   textStyle(BOLD);
-  text("AI水果短劇變臉特效", width / 2, 40); // 調整主標題的 Y 座標，使其在學號姓名下方
-  textSize(14);
+  text("AI水果短劇變臉特效", width / 2, 60); // 調整主標題的 Y 座標，使其在學號姓名下方
+  textSize(24); // 放大字體
   textStyle(NORMAL);
   fill(255, 200);
-  text("點下方按鈕切換水果臉譜", width / 2, 74); // 調整副標題的 Y 座標
+  text("點下方按鈕切換水果臉譜", width / 2, 120); // 調整副標題的 Y 座標
   pop();
 }
 

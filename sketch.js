@@ -127,16 +127,29 @@ function drawEarrings(face) {
   if (!leftPoint || !rightPoint) return;
 
   // 1. 計算臉部的傾斜角度 (Face Tilt)
-  // 使用 atan2 算出兩點之間的角度，這就是重力感應的關鍵基準
   let faceAngle = atan2(rightPoint.y - leftPoint.y, rightPoint.x - leftPoint.x);
 
   // 2. 計算臉部寬度作為縮放基準
   let faceW = dist(leftPoint.x, leftPoint.y, rightPoint.x, rightPoint.y);
   let earringSize = faceW * 0.12; 
 
-  // 3. 實作重力感應擺動 (Gravity Swing)
-  // 我們讓耳環的角度 = (負的臉部角度) + (自動晃動)
-  // 這樣當頭往左歪，耳環會往相對右邊擺，視覺上看起來就是永遠垂直向下
+  // 3. 偵測快速動態：比對上一影格的座標與角度
+  let moveDist = dist(leftPoint.x, leftPoint.y, lastLeftPoint.x, lastLeftPoint.y);
+  let rotSpeed = abs(faceAngle - lastFaceAngle);
+
+  // 設定觸發門檻 (移動超過 7 像素或旋轉變化超過 0.05 弧度)
+  // 增加 lastLeftPoint.x > 0 判斷是為了避免程式啟動第一格的跳躍觸發
+  if (lastLeftPoint.x > 0 && (moveDist > 7 || rotSpeed > 0.05)) {
+    triggerSparkles(leftPoint.x, leftPoint.y, earringSize);
+    triggerSparkles(rightPoint.x, rightPoint.y, earringSize);
+  }
+
+  // 4. 更新追蹤變數，供下一影格比對使用
+  lastLeftPoint = { x: leftPoint.x, y: leftPoint.y };
+  lastRightPoint = { x: rightPoint.x, y: rightPoint.y };
+  lastFaceAngle = faceAngle;
+
+  // 5. 實作重力感應擺動 (Gravity Swing)
   let gravityInertia = -faceAngle; 
   let naturalOscillation = sin(frameCount * 0.1) * 0.15; // 基礎的輕微晃動
   let totalSwing = gravityInertia + naturalOscillation;
